@@ -1,14 +1,16 @@
 const {Client} = require('@notionhq/client')
 const axios = require('axios');
-const { create } = require('domain');
+require('dotenv').config();
+
 
 const notion = new Client({auth:process.env.NOTION_API_KEY})
-const url = 'https://pokeapi.co/api/v2/pokemon/2'
+
 
 const pokeArray=[];
-
-const getData = async()=>{
-  await axios.get(url)
+const addData = async()=>{
+    for(let i = 2; i<25 ;i++){
+        let url = `https://pokeapi.co/api/v2/pokemon/${i}`
+        await axios.get(url)
     .then((poke)=>{
        const pokeData = {
         "name": poke.data.species.name,
@@ -25,72 +27,87 @@ const getData = async()=>{
        
        pokeArray.push(pokeData);
        console.log(`Fetching ${pokeData.name} from PokeAPI`);
-       console.log(pokeData);
+       //console.log(pokeData);
     })
     .catch((error)=>{
         console.log(error);
     })
+    }
 
-    //createNotionPage();
-}
+  }
 
-
-
-
-const createNotionPage = async()=>{
+  const createNotionPage = async()=>{
    
+
     pokeArray.map((pokemon)=>{
         console.log("Sending Data to Notion");
-        const response =notion.pages.create({
+        try{
+            const response =notion.pages.create({
 
        
-            "parent":{
-                "type":"databse_id",
-                "database_id":process.env.NOTION_DATABASE_ID
-            },
-            "properties":{
-                "Name":{
-                    "title":[
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": pokemon.name
+                "parent":{
+                    "type":"database_id",
+                    "database_id":process.env.NOTION_DATABASE_ID
+                },
+                "properties":{
+                    "Name":{
+                        "title":[
+                            {
+                                "type": "text",
+                                "text": {
+                                    "content": pokemon.name
+                                }
                             }
-                        }
-                    ]
-                },
-                "No":{
-                    "number": pokemon.number
-                },
-                "HP":{
-                    "number": pokemon.hp
-                },
-                "Attack":{
-                    "number": pokemon.attack
-                },
-                "Defense":{
-                    "number": pokemon.hp
-                },
-                "Sp. Attack":{
-                    "number": pokemon['special-attack']
-                },
-                "Sp. Defense":{
-                    "number": pokemon['special-defense']
-                },
-                "Spped":{
-                    "number": pokemon.speed
-                },
-                "Height":{
-                    "number": pokemon.height
-                },
-                "Weight":{
-                    "number": pokemon.weight
+                        ]
+                    },
+                    "No":{
+                        "number": pokemon.number
+                    },
+                    "HP":{
+                        "number": pokemon.hp
+                    },
+                    "Attack":{
+                        "number": pokemon.attack
+                    },
+                    "Defense":{
+                        "number": pokemon.defense
+                    },
+                    "Sp. Attack":{
+                        "number": pokemon['special-attack']
+                    },
+                    "Sp. Defense":{
+                        "number": pokemon['special-defense']
+                    },
+                    "Speed":{
+                        "number": pokemon.speed
+                    },
+                    "Height":{
+                        "number": pokemon.height
+                    },
+                    "Weight":{
+                        "number": pokemon.weight
+                    }
+    
                 }
-
-            }
-        })
-        console.log(response);
+            })
+       
+        console.log(response); 
+    }catch(error){
+        console.error("Error creating Notion page:", error);
+    }
     })
+
 }
+
+const getData = async()=>{
+ 
+   await addData();
+    createNotionPage();
+}
+
+
+
+
+
 
 getData();
